@@ -5,7 +5,7 @@ How BingBongAI's language model works.
 > **Status: implemented (Phase 3) and verified (Phase 4).** Code in [src/model/](src/model/).
 > Shapes, causal masking, parameter counts and initial loss described below are asserted in
 > [tests/test_model.py](tests/test_model.py) and [tests/test_attention.py](tests/test_attention.py).
-> The model has **not been trained** — every weight is still random.
+> Generation (section 9) is implemented and measured on the Phase-7 synthetic checkpoint.
 
 ## Notation
 
@@ -242,3 +242,139 @@ By formula: embeddings + `L × (12D² + 13D)` + final norm, with the head tied.
 **Verified.** The implementation's `sum(p.numel())` equals these hand-derived totals exactly,
 for both configs, per component. [tests/test_model.py](tests/test_model.py) asserts it, so if
 the architecture or this document ever drift apart, the test suite fails.
+
+---
+
+## 9. Generation: how BingBongAI writes, one token at a time — `src/inference/generate.py`
+
+Training teaches the model to predict the next token. Writing is that single prediction,
+repeated, with the model reading its own output:
+
+```
+ids = encode("The capital of Japan is")
+repeat:
+    logits = model(ids[-512:])          (1, T, V)   run the whole model
+    scores = logits[0, -1]              (V,)        keep ONLY the last position
+    next   = choose(scores)             one id      greedy or sampled
+    stop if next is <|eos|>
+    ids.append(next)                    the choice becomes part of the next input
+```
+
+Three facts follow directly from that loop:
+
+- **One forward pass produces one token.** 60 tokens of output means 60 full runs of the model.
+- **Nothing plans ahead, and nothing is revised.** Each token is chosen knowing only the tokens
+  before it. Once appended, it is part of the input forever.
+- **The model's only memory is the token sequence.** There is no hidden state carried between
+  steps. A test proves it: generating 10 tokens and then 5 more from the result gives exactly the
+  same 15 tokens as generating 15 at once. Past 512 tokens, the oldest are dropped and the model
+  cannot see them at all.
+
+### Choosing the token
+
+`sample_next_token` turns the `(V,)` score vector into one id:
+
+1. **Restrict to real tokens.** The output layer has 8,192 rows; the synthetic tokenizer only 484.
+   Ids with no text are never eligible. (Phase 7 found this the hard way.)
+2. **Temperature `T`** divides the scores before softmax: `p_i = exp(z_i/T) / Σ exp(z_j/T)`.
+   `T = 1` is the model's own distribution; `T < 1` sharpens it; `T > 1` flattens it. `T = 0`
+   is treated as exact greedy argmax.
+3. **Top-k** keeps the `k` highest scores and sets the rest to −∞, so their probability is
+   exactly 0. It cuts off the long tail of individually unlikely tokens.
+4. **Sample** one id from what remains, using a private seeded `torch.Generator`.
+
+**Determinism.** Greedy has no randomness. Sampling is reproducible from a seed; if none is
+given, one is drawn from the OS and *reported*, so any output can be regenerated. Generation
+uses its own generator and never touches PyTorch's global random state (tested). Sampling
+happens on CPU; logits computed on GPU may differ from CPU logits in the last bits, so a seed
+reproduces on the same device, not necessarily across devices.
+
+**Streaming.** A character can span several tokens — 🤖 is four UTF-8 bytes, which a byte-level
+tokenizer may emit one at a time. `IncrementalDecoder` holds text back while it ends in an
+incomplete character, so the screen never shows garbage that later "turns into" the right symbol.
+
+### Watching it happen: `--explain`
+
+```bash
+.venv/Scripts/python.exe scripts/generate.py --prompt "The capital of Japan is" --temperature 0.8 --top-k 40 --seed 7 --max-new-tokens 12 --explain
+```
+
+**Real output** from the synthetic checkpoint (step 620), first five steps:
+
+```
+step  chosen      p(model)  p(sampled)   top candidates
+   1   Tokyo         0.977       0.996    Tokyo:0.98   is:0.00   an:0.00   Peru:0.00
+   2  .              0.999       1.000   .:1.00   Paris:0.00   orange:0.00
+   3  \n             1.000       1.000   \n:1.00   orange:0.00   six:0.00
+   4  The            0.482       0.523   The:0.48  After:0.26  A:0.25
+   5   color         0.730       0.777    color:0.73   capital:0.27
+```
+
+Step 1 is a memorised fact, so the model is nearly certain. **Step 4 is where a new sentence
+starts, and the model is genuinely uncertain — for a good reason.** In the corpus, 16 of 33
+sentences start with "The" (0.485), 9 with "After" (0.273) and 8 with "A" (0.242). The model's
+0.48 / 0.26 / 0.25 matches those frequencies. It did not just memorise sentences; it learned how
+often each kind occurs. `p(sampled)` is higher than `p(model)` for the top choices because
+temperature 0.8 sharpens the distribution.
+
+### Measured: what the decoding settings actually do
+
+`scripts/sampling_sweep.py` on the synthetic checkpoint. **Accuracy:** the 33 patterns × 3
+seeds, prompt in context. **Valid lines:** complete lines from 20 free generations of 48 tokens
+that are real corpus sentences. **Record:**
+[experiments/phase8_sampling.json](experiments/phase8_sampling.json).
+
+| Setting | Accuracy | Valid lines | Distinct outputs | Sentence starts The / After / A |
+|---|---|---|---|---|
+| greedy | 33/33 | 6/6 | 1/1 | 1.00 / 0.00 / 0.00 |
+| T = 0.5 | 99/99 | 132/133 | 20/20 | 0.65 / 0.22 / 0.14 |
+| T = 0.8, top-k 40 | 99/99 | 139/139 | 20/20 | 0.58 / 0.24 / 0.19 |
+| **T = 1.0** | **99/99** | **142/144** | **20/20** | **0.51 / 0.28 / 0.21** |
+| T = 1.5 | 89/99 | 99/140 | 20/20 | 0.46 / 0.29 / 0.23 |
+| T = 1.5, top-k 5 | 94/99 | 135/146 | 20/20 | 0.47 / 0.27 / 0.25 |
+| T = 2.5 | 5/99 | 2/82 | 20/20 | 0.38 / 0.17 / 0.06 |
+| *corpus* | | | | *0.485 / 0.273 / 0.242* |
+
+What the numbers show:
+
+- **Greedy collapses to the single most likely path.** Every sentence it wrote started with "The"
+  (the corpus has 48.5%). Correct, but it can only ever write one thing.
+- **T = 1.0 reproduces the data.** Sentence starts of 0.51 / 0.28 / 0.21 against a corpus of
+  0.485 / 0.273 / 0.242, with 142 of 144 lines valid. Sampling from the model's own distribution
+  gives back the distribution it was trained on.
+- **T < 1 exaggerates the majority.** At 0.5, "The" rises to 65%: sharpening makes the already
+  likely likelier.
+- **T > 1 breaks the patterns.** At 1.5, validity falls to 71% (99/140) and fragments and
+  hybrids appear: *"A bird sings. dog barks."*, *"… of an orange Tokyo."* At 2.5 almost nothing
+  is valid (2/82).
+- **Top-k repairs high temperature.** At T = 1.5, adding top-k 5 lifts validity from 71% to 92%
+  (135/146) and accuracy from 89 to 94 of 99, by removing the tail tokens that produced most of
+  the hybrids — while keeping the more even sentence-start mix. The errors it still makes are
+  among near-miss candidates: *"After four comes nine."*, *"The capital of Peru is Paris is
+  yellow."*
+
+Even at T = 1.0 there were invalid lines: *"The coal is black."* and *"The color of Japan is
+green."* Sampling occasionally picks a lower-probability token and then continues plausibly from
+it. That is the trade for variety.
+
+**Defaults** in `scripts/generate.py`: temperature 0.8, top-k 40 — 99/99 accuracy and 139/139 valid
+lines in this sweep, with more variety than greedy. These defaults are tuned on 33 memorised
+sentences; they should be re-measured once the model is trained on real text.
+
+### Measured: generation speed
+
+Greedy, 60 new tokens, prompt "The color of", 3 runs after a warm-up, small model (13.99 M):
+
+| Device | Runs (tokens/s) | Mean |
+|---|---|---|
+| RTX 3050 Laptop (CUDA) | 172.6, 221.2, 226.9 | **206.9** |
+| Ryzen 7 4800H (CPU) | 48.6, 52.7, 53.1 | **51.5** |
+
+The first call on CUDA is much slower: a cold `generate.py` run measured **49 tok/s** for 20
+tokens, because it includes one-off GPU kernel setup. The table excludes that by warming up
+first.
+
+Every step re-runs all 6 layers over the whole window, so each new token costs more than the one
+before. A **key/value cache** — keeping each layer's `k` and `v` from earlier steps and computing
+only the new token — is the standard fix and the obvious first optimisation for Phase 12. It is
+not implemented yet; these numbers are the baseline it will be measured against.

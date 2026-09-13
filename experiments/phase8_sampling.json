@@ -1,0 +1,228 @@
+{
+  "experiment": "phase8_sampling",
+  "timestamp_utc": "2026-09-13T13:22:36+00:00",
+  "checkpoint": "checkpoints/synthetic/best.pt",
+  "checkpoint_step": 620,
+  "torch_version": "2.14.0+cu126",
+  "free_prompt": "The color of snow is",
+  "free_tokens": 48,
+  "corpus_start_word_share": {
+    "The": 0.48484848484848486,
+    "After": 0.2727272727272727,
+    "A": 0.24242424242424243
+  },
+  "settings": {
+    "greedy": {
+      "temperature": 0.0,
+      "top_k": null,
+      "accuracy": {
+        "correct": 33,
+        "trials": 33,
+        "rate": 1.0
+      },
+      "free_generation": {
+        "samples": 1,
+        "distinct_outputs": 1,
+        "complete_lines": 6,
+        "valid_corpus_sentences": 6,
+        "validity_rate": 1.0,
+        "invalid_examples": [],
+        "start_word_share": {
+          "The": 1.0,
+          "After": 0.0,
+          "A": 0.0
+        },
+        "example": " white.\nThe color of the sky is blue.\nThe color of a cloud is grey.\nThe color of chocolate is brown.\nThe color of coal is black.\nThe capital of France is Paris.\nThe color of"
+      }
+    },
+    "T=0.5": {
+      "temperature": 0.5,
+      "top_k": null,
+      "accuracy": {
+        "correct": 99,
+        "trials": 99,
+        "rate": 1.0
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 133,
+        "valid_corpus_sentences": 132,
+        "validity_rate": 0.9924812030075187,
+        "invalid_examples": [
+          "The color of coal is orange."
+        ],
+        "start_word_share": {
+          "The": 0.6466165413533834,
+          "After": 0.21804511278195488,
+          "A": 0.13533834586466165
+        },
+        "example": " white.\nThe color of blood is red.\nThe color of a cloud is grey.\nThe capital of France is Paris.\nAfter five comes six.\nThe color of the sun is yellow.\nThe capital of Peru is"
+      }
+    },
+    "T=0.8, top-k 40": {
+      "temperature": 0.8,
+      "top_k": 40,
+      "accuracy": {
+        "correct": 99,
+        "trials": 99,
+        "rate": 1.0
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 139,
+        "valid_corpus_sentences": 139,
+        "validity_rate": 1.0,
+        "invalid_examples": [],
+        "start_word_share": {
+          "The": 0.5755395683453237,
+          "After": 0.23741007194244604,
+          "A": 0.18705035971223022
+        },
+        "example": " white.\nThe color of blood is red.\nThe color of a cloud is grey.\nThe capital of France is Paris.\nAfter five comes six.\nThe color of the sun is yellow.\nThe capital of Peru is"
+      }
+    },
+    "T=1.0": {
+      "temperature": 1.0,
+      "top_k": null,
+      "accuracy": {
+        "correct": 99,
+        "trials": 99,
+        "rate": 1.0
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 144,
+        "valid_corpus_sentences": 142,
+        "validity_rate": 0.9861111111111112,
+        "invalid_examples": [
+          "The coal is black.",
+          "The color of Japan is green."
+        ],
+        "start_word_share": {
+          "The": 0.5138888888888888,
+          "After": 0.2777777777777778,
+          "A": 0.20833333333333334
+        },
+        "example": " white.\nThe capital of Peru is Lima.\nThe color of a cloud is grey.\nThe capital of France is Paris.\nAfter five comes six.\nThe color of the sun is yellow.\nThe capital of Peru is"
+      }
+    },
+    "T=1.5": {
+      "temperature": 1.5,
+      "top_k": null,
+      "accuracy": {
+        "correct": 89,
+        "trials": 99,
+        "rate": 0.898989898989899
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 140,
+        "valid_corpus_sentences": 99,
+        "validity_rate": 0.7071428571428572,
+        "invalid_examples": [
+          " Peru lavender is purple.",
+          " neighs.",
+          " of an orange Tokyo.",
+          "A bird sings. dog barks.",
+          "A blood is Lima.",
+          "A horse chocolate is brown."
+        ],
+        "start_word_share": {
+          "The": 0.4642857142857143,
+          "After": 0.2857142857142857,
+          "A": 0.22857142857142856
+        },
+        "example": " white.\nThe capital of Peru is Paris is yellow.\nA duck quacks.\nA duck quacks.\nThe color of grass is green.\nThe color of the sky is blue.\nA bird sings. dog barks.\n"
+      }
+    },
+    "T=1.5, top-k 5": {
+      "temperature": 1.5,
+      "top_k": 5,
+      "accuracy": {
+        "correct": 94,
+        "trials": 99,
+        "rate": 0.9494949494949495
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 146,
+        "valid_corpus_sentences": 135,
+        "validity_rate": 0.9246575342465754,
+        "invalid_examples": [
+          " of the sky is Manila.",
+          "After four comes nine.",
+          "After four comes seven.",
+          "The capital of Peru is Paris is yellow.",
+          "The color of an orange is brown.",
+          "The color of blood is yellow."
+        ],
+        "start_word_share": {
+          "The": 0.4657534246575342,
+          "After": 0.273972602739726,
+          "A": 0.2534246575342466
+        },
+        "example": " white.\nThe capital of Peru is Paris is yellow.\nA duck quacks.\nA duck quacks.\nThe color of chocolate is brown.\nThe color of the sky is blue.\nA bird sings.\nAfter two comes"
+      }
+    },
+    "T=2.5": {
+      "temperature": 2.5,
+      "top_k": null,
+      "accuracy": {
+        "correct": 5,
+        "trials": 99,
+        "rate": 0.050505050505050504
+      },
+      "free_generation": {
+        "samples": 20,
+        "distinct_outputs": 20,
+        "complete_lines": 82,
+        "valid_corpus_sentences": 2,
+        "validity_rate": 0.024390243902439025,
+        "invalid_examples": [
+          "  duck frog capital8 black. two six\ufffd snow Tokyo eight.",
+          " Manila France is Tokyo. Oslo.",
+          " Manila.",
+          " Nairobi comes me is seven nine.",
+          " Nairobi.~ neighs.\ufffd comes eight.\u0003 quacks purple cloud is green.",
+          " Oslo grey Tokyo five comes roars."
+        ],
+        "start_word_share": {
+          "The": 0.3780487804878049,
+          "After": 0.17073170731707318,
+          "A": 0.06097560975609756
+        },
+        "example": " Mani neighs barks sin is chocolate\ufffd six Paris Manila blood Tokyo horse of Kenya is nine comes ten.\nAfter; roars. fivec.\n Manila.\nThe orange. Paris is orange.\n To.\nThe dog barks.\n"
+      }
+    }
+  },
+  "speed": [
+    {
+      "device": "cuda",
+      "tokens": 60,
+      "repeats": 3,
+      "tokens_per_second": [
+        172.56726887725893,
+        221.2106341868123,
+        226.8530491317318
+      ],
+      "mean_tokens_per_second": 206.8769840652677
+    },
+    {
+      "device": "cpu",
+      "tokens": 60,
+      "repeats": 3,
+      "tokens_per_second": [
+        48.564348814451385,
+        52.71307613730971,
+        53.09188559539697
+      ],
+      "mean_tokens_per_second": 51.45643684905269
+    }
+  ],
+  "sweep_seconds": 35.41129580000052
+}

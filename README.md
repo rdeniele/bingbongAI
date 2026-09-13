@@ -32,7 +32,7 @@ inference.
 | 5 | Create a tiny dataset | **Done** — synthetic corpus, tokenized train/val split, batch loader |
 | 6 | Train | **Done** — trainer with checkpoints, exact resume, VRAM-spill warning |
 | 7 | Prove the model learned | **Done** — val loss 9.07 → 0.48, completions 0/33 → 33/33. See [TRAINING.md](TRAINING.md) |
-| 8 | Text generation | Not started |
+| 8 | Text generation | **Done** — temperature, top-k, seeded + greedy modes, streaming, `--explain`. See [ARCHITECTURE.md](ARCHITECTURE.md) §9 |
 | 9 | Offline chat | Not started |
 | 10 | Local knowledge retrieval | Not started |
 | 11 | Local memory | Not started |
@@ -73,6 +73,14 @@ Verified working on this machine: **PyTorch 2.14.0+cu126, CUDA available, RTX 30
 
 ```bash
 .venv/Scripts/python.exe scripts/prove_learning.py --config configs/synthetic.yaml
+```
+
+```bash
+.venv/Scripts/python.exe scripts/generate.py --prompt "The color of snow is"
+```
+
+```bash
+.venv/Scripts/python.exe scripts/generate.py --prompt "The capital of Japan is" --explain
 ```
 
 ## Layout
