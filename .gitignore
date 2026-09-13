@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Trained artifacts: large, reproducible from code + data.
+checkpoints/*
+!checkpoints/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+!data/processed/hardware_report.json
+data/tokenizer/*
+!data/tokenizer/.gitkeep
+
+# Local conversation memory is private and never committed.
+data/memory/
+
+# Local agent settings (impeccable hooks); not part of the model project.
+.claude/settings.local.json
+
+# Training run logs (metrics.jsonl per run). Results worth keeping go in experiments/.
+runs/

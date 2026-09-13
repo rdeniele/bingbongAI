@@ -1,0 +1,69 @@
+# BingBongAI - "synthetic" configuration: the Phase-7 learning proof
+#
+# EXACTLY the `small` architecture (13,989,888 parameters), trained on the
+# synthetic pattern corpus instead of real text. The question this run answers
+# is narrow: starting from random weights, does training make this model learn?
+#
+# Differences from small.yaml are only in data, tokenizer location, and the
+# length/frequency of training -- never in the model.
+
+name: synthetic
+
+tokenizer:
+  # Same target as `small`, so the model's embedding table is the same size.
+  # The synthetic corpus only supports a few hundred merges, so the trained
+  # tokenizer will be far smaller than 8192. No input ever selects the unused
+  # embedding rows, and training pushes their output scores down. But an
+  # UNTRAINED model can score them highest, so generation restricts its choice
+  # to ids the tokenizer can decode (src/inference/generate.py). The
+  # architecture stays identical to the real model.
+  vocab_size: 8192
+  special_tokens:
+    pad: "<|pad|>"
+    unk: "<|unk|>"
+    bos: "<|bos|>"
+    eos: "<|eos|>"
+  vocab_path: data/tokenizer/synthetic
+  min_merge_frequency: 2
+
+model:
+  context_length: 512
+  embedding_dim: 384
+  num_layers: 6
+  num_heads: 6
+  ffn_multiplier: 4
+  dropout: 0.0                # no regularisation: we WANT it to memorise
+  tie_embeddings: true
+  positional: learned
+  fused_kernels: true
+
+training:
+  batch_size: 16              # measured to fit: 2,554 MiB reserved (HARDWARE.md section 4)
+  gradient_accumulation_steps: 1
+  learning_rate: 3.0e-4
+  min_learning_rate: 3.0e-5
+  warmup_steps: 50
+  max_steps: 600              # ~4.9M tokens seen, over a ~41k-token train split
+  weight_decay: 0.1
+  grad_clip: 1.0
+  beta1: 0.9
+  beta2: 0.95
+  eval_interval: 50
+  eval_batches: 10
+  checkpoint_interval: 200
+  keep_last: 2                # step checkpoints to keep (latest.pt and best.pt always kept)
+  log_interval: 10
+  seed: 1337
+  device: auto
+  precision: fp32
+
+data:
+  corpus_dir: data/raw/synthetic
+  train_path: data/processed/synthetic_train.bin
+  val_path: data/processed/synthetic_val.bin
+  meta_path: data/processed/synthetic_meta.json
+  val_split: 0.1
+
+paths:
+  checkpoint_dir: checkpoints
+  run_dir: runs

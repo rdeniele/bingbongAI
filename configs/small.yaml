@@ -1,0 +1,72 @@
+# BingBongAI - "small" configuration  [PRIMARY TARGET]
+#
+# Target: ~13.99M parameters (arithmetic from ARCHITECTURE.md section 8;
+# verified against the real implementation in Phase 3).
+#
+# Sized for the measured hardware in HARDWARE.md: RTX 3050 Laptop, 4 GiB VRAM.
+# Estimated optimizer+weight cost at fp32 with AdamW: ~224 MiB. Activations are
+# on top of that and have NOT been measured yet.
+#
+# Nothing here is tuned against a real loss curve. These are conventional
+# starting points, revised once Phase 6 produces actual measurements.
+
+name: small
+
+tokenizer:
+  # Byte-level BPE, trained on our own corpus. See src/tokenizer/tokenizer.py
+  # for why byte-level BPE rather than character- or word-level.
+  #
+  # 8192 = 256 byte tokens + 7932 merges + 4 special tokens.
+  # Doubling the vocab over `tiny` costs 8192*384 = 3.1M embedding parameters
+  # (22% of the model) but shortens sequences, so more text fits in 512 tokens.
+  vocab_size: 8192
+  special_tokens:
+    pad: "<|pad|>"
+    unk: "<|unk|>"
+    bos: "<|bos|>"
+    eos: "<|eos|>"
+  vocab_path: data/tokenizer/small
+  min_merge_frequency: 2      # don't spend a token id on a pair seen only once
+
+model:
+  context_length: 512         # T: attention cost grows with T^2
+  embedding_dim: 384          # D: must be divisible by num_heads
+  num_layers: 6               # L
+  num_heads: 6                # H -> head dim = 384/6 = 64
+  ffn_multiplier: 4           # feed-forward hidden size = 4*D = 1536
+  dropout: 0.0                # 0 while proving the model can overfit; raise for real data
+  tie_embeddings: true        # LM head reuses the token embedding: saves V*D = 3.1M params
+  positional: learned         # see ARCHITECTURE.md section 2
+  fused_kernels: true         # fast, memory-saving kernels; proven equal to the manual math in tests
+
+training:
+  batch_size: 16              # 16 x 512 = 8192 tokens/step. STARTING POINT -- halve it and
+                              # raise gradient_accumulation_steps if it OOMs on 4 GiB.
+  gradient_accumulation_steps: 1
+  learning_rate: 3.0e-4
+  min_learning_rate: 3.0e-5   # cosine schedule decays to this
+  warmup_steps: 200
+  max_steps: 20000
+  weight_decay: 0.1           # weight matrices only, not biases or layer norms
+  grad_clip: 1.0
+  beta1: 0.9
+  beta2: 0.95
+  eval_interval: 250
+  eval_batches: 20
+  checkpoint_interval: 500
+  keep_last: 2                # step checkpoints kept (latest.pt and best.pt always kept)
+  log_interval: 25
+  seed: 1337                  # fixed seed: runs must be reproducible
+  device: auto                # auto | cuda | cpu
+  precision: fp32             # get it CORRECT first; try amp/bf16 after fp32 works
+
+data:
+  corpus_dir: data/raw        # tokenizer + dataset are built from the .txt files here
+  train_path: data/processed/small_train.bin
+  val_path: data/processed/small_val.bin
+  meta_path: data/processed/small_meta.json
+  val_split: 0.1
+
+paths:
+  checkpoint_dir: checkpoints
+  run_dir: runs

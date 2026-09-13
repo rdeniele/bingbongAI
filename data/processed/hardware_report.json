@@ -1,0 +1,49 @@
+{
+  "os": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.26200",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 23 Model 96 Stepping 1, AuthenticAMD"
+  },
+  "python": {
+    "version": "3.14.4",
+    "implementation": "CPython",
+    "executable": "C:\\Users\\ronde\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "64bit": true
+  },
+  "cpu": {
+    "logical_cores": 16,
+    "physical_cores": "unknown"
+  },
+  "memory": {
+    "total_gib": "unknown",
+    "available_gib": "unknown",
+    "source": "psutil not installed"
+  },
+  "disk": {
+    "path": ".",
+    "total_gib": 219.84,
+    "free_gib": 115.16
+  },
+  "nvidia_smi": {
+    "available": true,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+        "memory_total": "4096 MiB",
+        "memory_used": "168 MiB",
+        "driver_version": "616.92",
+        "compute_capability": "8.6"
+      }
+    ]
+  },
+  "torch": {
+    "installed": false,
+    "reason": "torch is not installed in this interpreter"
+  },
+  "numpy": {
+    "installed": true,
+    "version": "2.4.4"
+  }
+}

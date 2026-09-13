@@ -1,0 +1,13 @@
+# BingBongAI dependencies.
+#
+# PyTorch is deliberately NOT pinned here with a plain `torch` line, because the
+# CUDA build must come from the PyTorch index. Install it explicitly:
+#
+#   pip install torch --index-url https://download.pytorch.org/whl/cu126
+#
+# See HARDWARE.md section 2 for what this machine supports and the C: drive caveat.
+
+numpy>=2.0
+pyyaml>=6.0        # configuration files
+psutil>=5.9        # RAM reporting in scripts/inspect_hardware.py
+pytest>=8.0        # tests

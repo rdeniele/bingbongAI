@@ -1,0 +1,66 @@
+# BingBongAI - "tiny" configuration
+#
+# The first model. Target: ~4.27M parameters (arithmetic from ARCHITECTURE.md section 8,
+# NOT yet verified against running code -- Phase 3 asserts it).
+#
+# Sized for the measured hardware in HARDWARE.md: RTX 3050 Laptop, 4 GiB VRAM.
+# The goal of this config is FAST ITERATION, not capability. A full run should take
+# minutes so that bugs are cheap to find.
+#
+# Nothing here is tuned against a real loss curve yet -- these are conventional
+# starting points that will be revised once Phase 6 produces actual measurements.
+
+name: tiny
+
+tokenizer:
+  # Byte-level BPE, trained on our own data in Phase 2.
+  vocab_size: 4096            # small vocab keeps the embedding table cheap (V*D params)
+  special_tokens:
+    pad: "<|pad|>"
+    unk: "<|unk|>"
+    bos: "<|bos|>"
+    eos: "<|eos|>"
+  vocab_path: data/tokenizer/tiny
+
+model:
+  context_length: 256         # T: attention cost grows with T^2, so start short
+  embedding_dim: 256          # D: must be divisible by num_heads
+  num_layers: 4               # L
+  num_heads: 4                # H -> head dim = 256/4 = 64
+  ffn_multiplier: 4           # feed-forward hidden size = 4*D = 1024 (convention)
+  dropout: 0.0                # 0 while proving the model can overfit; raise for real data
+  tie_embeddings: true        # LM head reuses the token embedding matrix: saves V*D = 1.05M params
+  positional: learned         # learned position embeddings; see ARCHITECTURE.md section 2
+  fused_kernels: true         # fast, memory-saving kernels; proven equal to the manual math in tests
+
+training:
+  batch_size: 32              # 32 x 256 = 8192 tokens/step. STARTING POINT -- if it OOMs,
+                              # halve it and raise gradient_accumulation_steps to compensate.
+  gradient_accumulation_steps: 1
+  learning_rate: 3.0e-4
+  min_learning_rate: 3.0e-5   # cosine schedule decays to this
+  warmup_steps: 100           # linear warmup guards against an early-training blowup
+  max_steps: 10000
+  weight_decay: 0.1           # applied to weight matrices only, not biases or layer norms
+  grad_clip: 1.0
+  beta1: 0.9
+  beta2: 0.95
+  eval_interval: 250
+  eval_batches: 20            # validation loss averaged over this many batches
+  checkpoint_interval: 500
+  keep_last: 2                # step checkpoints kept (latest.pt and best.pt always kept)
+  log_interval: 25
+  seed: 1337                  # fixed seed: runs must be reproducible
+  device: auto                # auto | cuda | cpu
+  precision: fp32             # get it CORRECT first; try amp/bf16 only after fp32 works
+
+data:
+  corpus_dir: data/raw
+  train_path: data/processed/train.bin
+  val_path: data/processed/val.bin
+  meta_path: data/processed/tiny_meta.json
+  val_split: 0.1
+
+paths:
+  checkpoint_dir: checkpoints
+  run_dir: runs
