@@ -33,7 +33,7 @@ inference.
 | 6 | Train | **Done** — trainer with checkpoints, exact resume, VRAM-spill warning |
 | 7 | Prove the model learned | **Done** — val loss 9.07 → 0.48, completions 0/33 → 33/33. See [TRAINING.md](TRAINING.md) |
 | 8 | Text generation | **Done** — temperature, top-k, seeded + greedy modes, streaming, `--explain`. See [ARCHITECTURE.md](ARCHITECTURE.md) §9 |
-| 9 | Offline chat | Not started |
+| 9 | Offline chat | **Done** — context fitting, streaming, `/context`, tested offline. The *system* works; the synthetic model cannot converse. See [ARCHITECTURE.md](ARCHITECTURE.md) §10 |
 | 10 | Local knowledge retrieval | Not started |
 | 11 | Local memory | Not started |
 | 12 | Quantisation | Not started |
@@ -81,6 +81,10 @@ Verified working on this machine: **PyTorch 2.14.0+cu126, CUDA available, RTX 30
 
 ```bash
 .venv/Scripts/python.exe scripts/generate.py --prompt "The capital of Japan is" --explain
+```
+
+```bash
+.venv/Scripts/python.exe scripts/chat.py
 ```
 
 ## Layout

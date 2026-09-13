@@ -80,7 +80,7 @@ from typing import Iterator
 import torch
 from torch import nn
 
-REPLACEMENT_CHAR = "�"
+REPLACEMENT_CHAR = "\ufffd"   # U+FFFD, what invalid UTF-8 decodes to
 
 
 @dataclass(frozen=True)
@@ -279,12 +279,16 @@ def stream_tokens(
                 result.token_ids.append(token_id)
 
             delta = decoder.push(token_id)
+            # Decide whether to stop BEFORE yielding. A caller that has what it needs
+            # may close this generator right after the yield, and then nothing after
+            # the yield would run -- the stop reason would be lost.
+            hit_stop = bool(config.stop_strings) and any(s in decoder.emitted
+                                                         for s in config.stop_strings)
+            if hit_stop and result is not None:
+                result.stop_reason = "stop_string"
             if delta:
                 yield delta
-
-            if config.stop_strings and any(s in decoder.emitted for s in config.stop_strings):
-                if result is not None:
-                    result.stop_reason = "stop_string"
+            if hit_stop:
                 break
 
         tail = decoder.flush()

@@ -292,7 +292,7 @@ def test_incremental_decoder_flushes_invalid_trailing_bytes(tokenizer) -> None:
     decoder = IncrementalDecoder(tokenizer)
     assert decoder.push(ord("a")) == "a"
     assert decoder.push(0xF0) == ""                   # start of a 4-byte char that never finishes
-    assert decoder.flush() == "�"
+    assert decoder.flush() == "\ufffd"
 
 
 # -- loading a checkpoint ------------------------------------------------------
@@ -325,3 +325,23 @@ def test_load_for_inference_rejects_a_mismatched_tokenizer(model, tokenizer, tmp
     path = write_checkpoint(tmp_path, model, tokenizer, fingerprint="0000000000000000")
     with pytest.raises(CheckpointError, match="fingerprint"):
         load_for_inference(path, CPU)
+
+
+def test_stop_reason_survives_the_caller_closing_the_stream_early(model, tokenizer) -> None:
+    """Regression (Phase 9): chat closes the stream as soon as it sees a stop string.
+    The stop reason used to be recorded after the final yield, so it was lost."""
+    from src.inference.generate import GenerationResult
+
+    free = generate(model, tokenizer, "the cat", GenerationConfig(max_new_tokens=30, temperature=0.0))
+    stop = free.text[1:3]
+    config = GenerationConfig(max_new_tokens=30, temperature=0.0, stop_strings=(stop,))
+    result = GenerationResult(prompt="the cat", text="", token_ids=[], prompt_tokens=0,
+                              prompt_truncated=False, stop_reason="max_new_tokens", seed=None, seconds=0.0)
+    stream = stream_tokens(model, tokenizer, "the cat", config, result=result)
+    seen = ""
+    for piece in stream:
+        seen += piece
+        if stop in seen:
+            break
+    stream.close()
+    assert result.stop_reason == "stop_string"

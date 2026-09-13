@@ -378,3 +378,97 @@ Every step re-runs all 6 layers over the whole window, so each new token costs m
 before. A **key/value cache** — keeping each layer's `k` and `v` from earlier steps and computing
 only the new token — is the standard fix and the obvious first optimisation for Phase 12. It is
 not implemented yet; these numbers are the baseline it will be measured against.
+
+---
+
+## 10. Chat: a format wrapped around a text continuer — `src/inference/chat.py`
+
+**The model does not know it is chatting.** It has no notion of "user", "assistant" or
+"question". Chat is a document format: the conversation is written out as plain text ending
+exactly where the reply should begin, and the model continues the document.
+
+```
+User: Hello
+BingBongAI: Hi! How can I help?
+User: What is programming?
+BingBongAI:                         ← the model continues from here
+```
+
+Generation stops when the model starts writing the next `User:` line (it is continuing a
+document, so it will happily invent the user's side too), at `<|eos|>`, or at the reply limit.
+
+**Why plain text instead of role tokens.** Dedicated `<|user|>` / `<|assistant|>` tokens would
+change the vocabulary, forcing the tokenizer *and* the model to be retrained. The plain-text
+template works with the existing tokenizer. Its known weakness: a user can type
+`BingBongAI: …` inside a message to fake a turn, which role tokens would prevent. Acceptable for a
+local single-user assistant. The template is defined once, in `ChatTemplate`, because
+conversational training data must use exactly the same format.
+
+**Fitting the conversation into 512 tokens.** Room is reserved for the reply (`max_new_tokens`,
+default 120), leaving 392 tokens. The newest message is always included; earlier turns are added
+newest-first while they fit, as **whole turns** — never cut mid-message; a single message too long
+to fit alone keeps only its final tokens. Dropped turns stay in `history` but are absent from the
+model's input. That is not gradual forgetting: those tokens are simply not there. Remembering
+beyond the window is Phase 11's local memory — a separate system, not the neural network.
+
+**Streaming without leaking the stop string.** `"\nUser:"` arrives across several tokens, so by
+the time it is complete, `"\nUser"` would already be on screen. `StopStringFilter` holds back text
+that could still become a stop string until it either completes one (dropped) or diverges
+(released). Tested with the stop string split across tokens four different ways.
+
+**Offline.** `tests/test_chat.py` replaces `socket.socket`, `socket.create_connection` and
+`socket.getaddrinfo` with functions that fail the test, then holds a two-turn conversation. Any
+network use anywhere in the chat path would fail it.
+
+### Measured: chatting with the synthetic checkpoint
+
+```bash
+.venv/Scripts/python.exe scripts/chat.py --seed 42 --verbose
+```
+
+Messages sent: `Hello`, `What is programming?`, `The color of snow is`, `After three comes`.
+**Full transcript:** [experiments/phase9_chat_transcript.txt](experiments/phase9_chat_transcript.txt).
+
+| Turn | You | BingBongAI (first line) | Reply tokens | Stop | Prompt tokens | Turns in view / dropped |
+|---|---|---|---|---|---|---|
+| 1 | Hello | `color of chocolate five comes six.` | 120 | limit | 21 / 392 | 1 / 0 |
+| 2 | What is programming? | `.` | 120 | limit | 174 / 392 | 3 / 0 |
+| 3 | The color of snow is | `.` | 120 | limit | 318 / 392 | 5 / 0 |
+| 4 | After three comes | `.` | 120 | limit | 319 / 392 | 5 / **2** |
+
+**The system works.** The prompt is built correctly, the window fills and old turns are dropped
+(turn 4: two turns fell out), `/context` shows the exact model input, and running the same seed
+twice reproduced the entire conversation word for word.
+
+**The model cannot converse — as predicted, and the ways it fails are instructive:**
+
+1. **Every reply ran to the 120-token limit.** The stop string never fired because the model has
+   never seen `User:`. Nothing tells it a reply should end, so it keeps writing pattern sentences.
+2. **The chat format broke even what it knows.** Asked "The color of snow is", it replied `.` —
+   not "white". Without the chat format, that prompt completes to " white." (section 9), and
+   greedy completion is correct on all 33 patterns (Phase 7). The
+   difference is the template: the model no longer sees a prompt ending in `is`, it sees
+   `…is⏎BingBongAI:`. It has never seen `BingBongAI:`, so nothing connects that to "white".
+   **Knowing facts is not enough; the format of the conversation itself has to be learned.**
+3. **Its own replies crowd out the conversation.** By turn 3, 318 of 392 prompt tokens were in
+   use, most of them the model's own earlier pattern sentences, which then shape what comes next.
+   A model that writes short, relevant replies avoids this; one that rambles fills its own window.
+
+### What it takes to make BingBongAI actually chat
+
+The chat system is ready. The model needs **training data in this exact template** — many
+examples of `User: …⏎BingBongAI: …⏎` — so that it learns what a reply is, that it answers the
+preceding message, and when to stop. Options, all compatible with the from-scratch rules:
+
+- **Write conversations yourself**, about your own projects and knowledge. Small, but genuinely yours.
+- **Public-domain or openly licensed dialogue text**, converted into the template (licence checked per source).
+- **Programmatic templates** for simple exchanges, like the synthetic corpus but conversational.
+
+One common shortcut is deliberately excluded: **generating training conversations with another
+LLM** (GPT, Claude, Llama…). That trains BingBongAI to imitate a pretrained model, which is
+distillation — it would bring another model's learned behaviour in through the data. Not allowed
+without an explicit decision to change the project's rules.
+
+A realistic expectation even with good data: a 14 M-parameter model trained on a modest corpus
+will learn the *shape* of a conversation — short replies, taking turns, stopping — long before it
+gives reliably *correct* answers. Factual answers at this scale come from retrieval (Phase 10).

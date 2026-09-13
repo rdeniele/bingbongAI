@@ -1,0 +1,223 @@
+================================
+        BingBongAI
+      Offline AI Assistant
+================================
+
+  model: checkpoints\synthetic\best.pt (synthetic, step 620, 13,989,888 parameters)
+  running on: NVIDIA GeForce RTX 3050 Laptop GPU - no internet connection used
+  decoding: temperature 0.8, top-k 40, seed 42
+  reply limit: 120 tokens | context window: 512 tokens
+
+  NOTE: this checkpoint was trained only on 33 synthetic sentences such as
+  'The color of snow is white.' It has never seen a conversation, so it
+  cannot understand questions yet. Expect it to answer with those patterns.
+
+  Type /help for commands, exit to quit.
+
+You: 
+BingBongAI: color of chocolate five comes six.
+A frog croaks.
+The color of lavender is red.
+The color of a cloud is grey.
+The color of lavender is purple.
+The capital of the Philippines is Manila.
+The capital of Kenya is Nairobi.
+The capital of France is Nairobi.
+After six comes seven.
+The color of chocolate is brown.
+The color of grass is green.
+After one comes two.
+The capital of chocolate is Lima.
+After eight comes nine.
+After four comes five.
+The color of an orange is orange.
+
+  [120 tokens, 141 tok/s, stop: max_new_tokens, seed 42 | prompt 21/392 tokens, 1 turns in view, 0 dropped]
+
+You: 
+BingBongAI: .
+The color of an orange is green.
+A dog barks.
+After three comes six.
+After six comes seven.
+The capital of the sun nine.
+After four comes five.
+The color of blood is yellow.
+A horse neighs.
+The capital of Norway is Oslo.
+After seven comes eight.
+The color of snow is white.
+The color of the sun is yellow.
+After two comes three.
+After six comes seven.
+A lion roars.
+After two comes three.
+The capital of Peru is Lima.
+The color of
+  [120 tokens, 151 tok/s, stop: max_new_tokens, seed 42 | prompt 174/392 tokens, 3 turns in view, 0 dropped]
+
+You: 
+BingBongAI: .
+The color of an orange is orange is white.
+The color of lavender is purple.
+A frog croaks.
+A dog barks.
+The color of a cloud is grey.
+After three comes eight.
+The capital of Kenya is Nairobi.
+A dog barks.
+The color of blood is red.
+The capital of Norway is Tokyo.
+After four comes five.
+A dog barks.
+After two comes three.
+After six comes seven.
+A lion roars.
+After three comes four.
+The capital of the Philippines is Manila.
+The color
+  [120 tokens, 144 tok/s, stop: max_new_tokens, seed 42 | prompt 318/392 tokens, 5 turns in view, 0 dropped]
+
+You:   The last reply was generated from exactly this input:
+  318 tokens of 392 available (5 turns in view, 0 dropped)
+  ---- begin model input ----
+User: Hello
+BingBongAI: color of chocolate five comes six.
+A frog croaks.
+The color of lavender is red.
+The color of a cloud is grey.
+The color of lavender is purple.
+The capital of the Philippines is Manila.
+The capital of Kenya is Nairobi.
+The capital of France is Nairobi.
+After six comes seven.
+The color of chocolate is brown.
+The color of grass is green.
+After one comes two.
+The capital of chocolate is Lima.
+After eight comes nine.
+After four comes five.
+The color of an orange is orange.
+User: What is programming?
+BingBongAI: .
+The color of an orange is green.
+A dog barks.
+After three comes six.
+After six comes seven.
+The capital of the sun nine.
+After four comes five.
+The color of blood is yellow.
+A horse neighs.
+The capital of Norway is Oslo.
+After seven comes eight.
+The color of snow is white.
+The color of the sun is yellow.
+After two comes three.
+After six comes seven.
+A lion roars.
+After two comes three.
+The capital of Peru is Lima.
+The color of
+User: The color of snow is
+BingBongAI:
+  ---- end model input (the model continued from here) ----
+
+You: 
+BingBongAI: .
+The color of an orange is green.
+A dog barks.
+The color of coal is black.
+After six comes seven.
+The color of lavender is purple.
+The capital of France is Paris.
+The capital of Kenya is Nairobi.
+A dog barks.
+The color of the sun is yellow.
+The capital of France is Paris.
+The capital of the sun is Manila.
+After one comes two.
+The capital of chocolate is Lima.
+The color of an orange is orange.
+A frog croaks.
+After eight comes nine.
+The
+  [120 tokens, 160 tok/s, stop: max_new_tokens, seed 42 | prompt 319/392 tokens, 5 turns in view, 2 dropped]
+
+You:   You: Hello
+  BingBongAI: color of chocolate five comes six.
+A frog croaks.
+The color of lavender is red.
+The color of a cloud is grey.
+The color of lavender is purple.
+The capital of the Philippines is Manila.
+The capital of Kenya is Nairobi.
+The capital of France is Nairobi.
+After six comes seven.
+The color of chocolate is brown.
+The color of grass is green.
+After one comes two.
+The capital of chocolate is Lima.
+After eight comes nine.
+After four comes five.
+The color of an orange is orange.
+  You: What is programming?
+  BingBongAI: .
+The color of an orange is green.
+A dog barks.
+After three comes six.
+After six comes seven.
+The capital of the sun nine.
+After four comes five.
+The color of blood is yellow.
+A horse neighs.
+The capital of Norway is Oslo.
+After seven comes eight.
+The color of snow is white.
+The color of the sun is yellow.
+After two comes three.
+After six comes seven.
+A lion roars.
+After two comes three.
+The capital of Peru is Lima.
+The color of
+  You: The color of snow is
+  BingBongAI: .
+The color of an orange is orange is white.
+The color of lavender is purple.
+A frog croaks.
+A dog barks.
+The color of a cloud is grey.
+After three comes eight.
+The capital of Kenya is Nairobi.
+A dog barks.
+The color of blood is red.
+The capital of Norway is Tokyo.
+After four comes five.
+A dog barks.
+After two comes three.
+After six comes seven.
+A lion roars.
+After three comes four.
+The capital of the Philippines is Manila.
+The color
+  You: After three comes
+  BingBongAI: .
+The color of an orange is green.
+A dog barks.
+The color of coal is black.
+After six comes seven.
+The color of lavender is purple.
+The capital of France is Paris.
+The capital of Kenya is Nairobi.
+A dog barks.
+The color of the sun is yellow.
+The capital of France is Paris.
+The capital of the sun is Manila.
+After one comes two.
+The capital of chocolate is Lima.
+The color of an orange is orange.
+A frog croaks.
+After eight comes nine.
+The
+
+You: Goodbye.
